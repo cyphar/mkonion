@@ -1,12 +1,5 @@
 ## `mkonion` ##
 
-> **NOTE**: This doesn't actually exist at the moment, I'm working on the code
-> while you're reading this. From my guess, this shouldn't be *too* hard to
-> implement, but certain cool features might take a while and will probably show
-> up later. Feel free to open an issue for a feature request, or open a PR to
-> add some cool feature that you needed. This project is free software, so you're
-> free to do what you like with it.
-
 `mkonion` is a very simple tool to allow you to set up a Tor Onion Service (also
 known as a Tor Hidden Service) for an existing Docker container. It takes
 advantage of `docker inspect` and other such features to figure out what ports
@@ -50,7 +43,16 @@ But who wants all of that typing?
 
 ### Usage ###
 
-Will be updated once the code has been written.
+The basic usage is the following:
+
+```
+% mkonion <container>
+```
+
+Simple as that. More options are in the works. You don't need to have any Tor
+setup, as `mkonion` includes inside it all of the required `Dockerfile` and
+configuration information to set up a new Tor container. If you want to take a
+closer look, check out `fakebuild.go`.
 
 ### Why Onion Services? ###
 
@@ -87,9 +89,9 @@ services from the internet using Tor.
 
 ### `TODO` ###
 
-* [ ] Base.
-* [ ] Generate configuration from `docker inspect`.
-* [ ] Come up with a better method than `--net=container` or `--net=host`.
+* [x] Base.
+* [x] Generate configuration from `docker inspect`.
+* [x] Come up with a better method than `--net=container` or `--net=host`.
 * [ ] Consider adding support for OnionCat for exposed UDP ports.
 * [ ] Extend `mkonion` to work with services running on the host machine.
 
