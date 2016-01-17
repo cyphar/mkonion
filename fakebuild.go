@@ -22,12 +22,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	containerTypes "github.com/docker/engine-api/types/container"
@@ -89,11 +88,31 @@ func buildTorImage(cli *client.Client, ctx io.Reader) (string, error) {
 	}
 
 	// XXX: For some weird reason, at this point the build has not finished. We
-	//      need to wait for resp.Body to be closed. We might as well tell the
+	//      need to wait for build.Body to be closed. We might as well tell the
 	//      user what the status of the build is.
 	log.Infof("building %s", MkonionTag)
-	if err := jsonmessage.DisplayJSONMessagesStream(build.Body, os.Stdout, os.Stdout.Fd(), true); err != nil {
-		return "", err
+	dec := json.NewDecoder(build.Body)
+	for {
+		// Modified from pkg/jsonmessage in Docker.
+		type JSONMessage struct {
+			Stream string `json:"stream,omitempty"`
+			Status string `json:"status,omitempty"`
+		}
+
+		// Decode the JSONMessages.
+		var jm JSONMessage
+		if err := dec.Decode(&jm); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return "", err
+		}
+
+		// Log the status.
+		log.Info(jm.Stream)
+		if jm.Status != "" {
+			log.Info(jm.Status)
+		}
 	}
 
 	inspect, _, err := cli.ImageInspectWithRaw(MkonionTag, false)
