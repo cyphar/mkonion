@@ -18,6 +18,36 @@ The point of this project is for this to be as turn-key as possible, in order to
 make it as easy as possible for people to try out Tor Onion Services with their
 existing Docker setup.
 
+### Requirements ###
+
+`mkonion` depends on first-class networking in the Docker daemon, which means
+your Docker daemon must be at least version `1.9.0`. Any earlier versions could
+be made to work with some hacks, but without first-class networking it can't work
+reliably and easily.
+
+### Overview ###
+
+Basically, `mkonion` automates the following steps:
+
+1. Create a new `bridge` network, connect the target container to the network.
+2. Generate a `torrc` which defines a Tor Onion Service that forwards all of the
+   exposed ports of the target container to the new network's IP for the target.
+3. Start a new Tor daemon in middle relay mode in a container connected to the
+   new network.
+
+You could in principle emulate `mkonion` with something like:
+
+```
+% docker network create --driver=bridge mkonion
+% docker network connect mkonion <target>
+% # Manually create a new torrc based on this:
+% docker inspect <target>
+% docker build -t <tor image> .
+% docker run --net=mkonion <tor image>
+```
+
+But who wants all of that typing?
+
 ### Usage ###
 
 Will be updated once the code has been written.
