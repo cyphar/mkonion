@@ -34,7 +34,6 @@ func mkonion() (err error) {
 	oTargetContainer := flag.Arg(0)
 
 	if flag.NArg() != 1 || oTargetContainer == "" {
-		log.Info(flag.NArg(), oTargetContainer)
 		flag.Usage()
 		return fmt.Errorf("must specify a container to create an onion service for")
 	}
@@ -69,6 +68,10 @@ func mkonion() (err error) {
 	ports, err := FindTargetPorts(cli, oTargetContainer)
 	if err != nil {
 		return fmt.Errorf("finding target ports: %s", err)
+	}
+
+	for _, port := range ports {
+		log.Infof("forwarding port: %s", port)
 	}
 
 	torrc, err := GenerateConfig(cli, ip, ports)

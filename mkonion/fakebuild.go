@@ -31,7 +31,6 @@ import (
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	containerTypes "github.com/docker/engine-api/types/container"
-	networkTypes "github.com/docker/engine-api/types/network"
 )
 
 // Building a Docker image usually requires a real filesystem in order to create
@@ -113,24 +112,24 @@ func runTorContainer(cli *client.Client, ident, imageID, network string) (string
 		Config: &containerTypes.Config{
 			Image: imageID,
 		},
-		NetworkingConfig: &networkTypes.NetworkingConfig{
-			// Connect to the network.
-			EndpointsConfig: map[string]*networkTypes.EndpointSettings{
-				network: nil,
-			},
-		},
 	}
 
 	resp, err := cli.ContainerCreate(config.Config, config.HostConfig, config.NetworkingConfig, config.Name)
 	if err != nil {
 		return "", err
 	}
+	// TODO: Remove container on failure.
 
 	for _, warning := range resp.Warnings {
 		log.Warn(warning)
 	}
 
 	if err := cli.ContainerStart(resp.ID); err != nil {
+		return "", err
+	}
+
+	// Connect to the network.
+	if err := cli.NetworkConnect(network, resp.ID, nil); err != nil {
 		return "", err
 	}
 
