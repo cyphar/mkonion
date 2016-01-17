@@ -22,7 +22,7 @@
 DOCKER=docker
 GO=go
 
-SRC=config.go fakebuild.go fakefile.go main.go name.go network.go
+SRC=config.go fakebuild.go fakefile.go main.go name.go network.go hostname.go
 OUT=bin
 
 .PHONY: docker

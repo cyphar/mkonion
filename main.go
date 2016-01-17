@@ -106,6 +106,14 @@ func mkonion() (err error) {
 		"container": containerID,
 	}).Infof("tor daemon started")
 
+	// XXX: This has issues because we need to wait for Tor to make a hostname.
+	onionAddr, err := GetOnionHostname(cli, containerID)
+	if err != nil {
+		return fmt.Errorf("get onion hostname: %s", err)
+	}
+	log.WithFields(log.Fields{
+		"onion": onionAddr,
+	}).Infof("retrieved Tor onion address")
 	return nil
 }
 
