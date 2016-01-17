@@ -87,14 +87,6 @@ you lose nothing by starting this up on your services. At the very least, I hope
 you'll try this out on your local machine so you can access your local dockerised
 services from the internet using Tor.
 
-### `TODO` ###
-
-* [x] Base.
-* [x] Generate configuration from `docker inspect`.
-* [x] Come up with a better method than `--net=container` or `--net=host`.
-* [ ] Consider adding support for OnionCat for exposed UDP ports.
-* [ ] Extend `mkonion` to work with services running on the host machine.
-
 ### License ###
 
 This project is licensed under the MIT/X11 License, as it is a fairly small
