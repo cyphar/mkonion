@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
@@ -108,8 +109,13 @@ func buildTorImage(cli *client.Client, ctx io.Reader) (string, error) {
 			return "", err
 		}
 
+		jm.Stream = strings.TrimSpace(jm.Stream)
+		jm.Status = strings.TrimSpace(jm.Status)
+
 		// Log the status.
-		log.Info(jm.Stream)
+		if jm.Stream != "" {
+			log.Info(jm.Stream)
+		}
 		if jm.Status != "" {
 			log.Info(jm.Status)
 		}

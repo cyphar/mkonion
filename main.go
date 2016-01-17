@@ -48,6 +48,9 @@ func mkonion() (err error) {
 	if err != nil {
 		return fmt.Errorf("creating onion network: %s", err)
 	}
+	log.WithFields(log.Fields{
+		"network": ident,
+	}).Info("created onion network")
 	defer func() {
 		if err != nil {
 			if err := PurgeOnionNetwork(cli, networkID); err != nil {
@@ -59,11 +62,20 @@ func mkonion() (err error) {
 	if err := ConnectOnionNetwork(cli, oTargetContainer, networkID); err != nil {
 		return fmt.Errorf("connecting target to onion network: %s", err)
 	}
+	log.WithFields(log.Fields{
+		"network":   ident,
+		"container": oTargetContainer,
+	}).Info("attached container to onion network")
 
 	ip, err := FindOnionIPAddress(cli, oTargetContainer, networkID)
 	if err != nil {
 		return fmt.Errorf("finding target onion ip: %s", err)
 	}
+	log.WithFields(log.Fields{
+		"network":   ident,
+		"container": oTargetContainer,
+		"ip":        ip,
+	}).Info("found target address")
 
 	ports, err := FindTargetPorts(cli, oTargetContainer)
 	if err != nil {
@@ -78,6 +90,7 @@ func mkonion() (err error) {
 	if err != nil {
 		return fmt.Errorf("generating torrc: %s", err)
 	}
+	log.Info("generated torrc config")
 
 	buildOptions := &FakeBuildOptions{
 		ident:     ident,
@@ -89,8 +102,10 @@ func mkonion() (err error) {
 	if err != nil {
 		return fmt.Errorf("starting tor daemon: %s", err)
 	}
+	log.WithFields(log.Fields{
+		"container": containerID,
+	}).Infof("tor daemon started")
 
-	log.Infof("tor daemon started: %s", containerID)
 	return nil
 }
 
