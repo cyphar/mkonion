@@ -61,8 +61,8 @@ func (ff *FakeFile) Sys() interface{} {
 
 func ArchiveContext(files []*FakeFile) (io.Reader, error) {
 	archive := new(bytes.Buffer)
-	wr := tar.NewWriter(archive)
-	defer wr.Close()
+	tw := tar.NewWriter(archive)
+	defer tw.Close()
 
 	// XXX: What about directories?
 	for _, file := range files {
@@ -71,15 +71,15 @@ func ArchiveContext(files []*FakeFile) (io.Reader, error) {
 			return nil, err
 		}
 
-		if err := wr.WriteHeader(hdr); err != nil {
+		if err := tw.WriteHeader(hdr); err != nil {
 			return nil, err
 		}
 
-		if _, err := wr.Write(file.Data); err != nil {
+		if _, err := tw.Write(file.Data); err != nil {
 			return nil, err
 		}
 	}
 
-	wr.Flush()
+	tw.Flush()
 	return bytes.NewReader(archive.Bytes()), nil
 }

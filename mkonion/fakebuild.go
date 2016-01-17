@@ -22,9 +22,12 @@
 package main
 
 import (
+	"fmt"
 	"io"
+	"os"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	containerTypes "github.com/docker/engine-api/types/container"
@@ -40,7 +43,16 @@ import (
 const (
 	MkonionTag        = "mkonion/tor:latest"
 	MkonionDockerfile = `
-	FROM ubuntu:14.04
+	FROM alpine:latest
+	RUN echo '@testing http://nl.alpinelinux.org/alpine/edge/testing' >> /etc/apk/repositories && \
+		apk update && \
+		apk upgrade && \
+	    apk add --update \
+			tor@testing && \
+		rm -rf /var/cache/apk/*
+	COPY torrc /etc/tor/torrc
+	ENTRYPOINT ["/usr/bin/tor", "-f", "/etc/tor/torrc"]
+	CMD []
 	`
 )
 
@@ -62,6 +74,8 @@ func buildTorImage(cli *client.Client, ctx io.Reader) (string, error) {
 	//      use a name that allows us to not pollute the host.
 
 	options := types.ImageBuildOptions{
+		// XXX: If we SuppressOutput we can get just the image ID, but we lose
+		//      being able to tell users what the status of the build is.
 		//SuppressOutput: true,
 		Tags:        []string{MkonionTag},
 		Remove:      true,
@@ -70,8 +84,16 @@ func buildTorImage(cli *client.Client, ctx io.Reader) (string, error) {
 		Context:     ctx,
 	}
 
-	_, err := cli.ImageBuild(options)
+	build, err := cli.ImageBuild(options)
 	if err != nil {
+		return "", err
+	}
+
+	// XXX: For some weird reason, at this point the build has not finished. We
+	//      need to wait for resp.Body to be closed. We might as well tell the
+	//      user what the status of the build is.
+	log.Infof("building %s", MkonionTag)
+	if err := jsonmessage.DisplayJSONMessagesStream(build.Body, os.Stdout, os.Stdout.Fd(), true); err != nil {
 		return "", err
 	}
 
@@ -126,13 +148,18 @@ type FakeBuildOptions struct {
 func FakeBuildRun(cli *client.Client, options *FakeBuildOptions) (string, error) {
 	ctx, err := makeBuildContext(options.torrc)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("making build context: %s", err)
 	}
 
 	imageID, err := buildTorImage(cli, ctx)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("building image: %s", err)
 	}
 
-	return runTorContainer(cli, options.ident, imageID, options.networkID)
+	containerID, err := runTorContainer(cli, options.ident, imageID, options.networkID)
+	if err != nil {
+		return "", fmt.Errorf("starting container: %s", err)
+	}
+
+	return containerID, nil
 }
