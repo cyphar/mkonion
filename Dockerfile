@@ -19,13 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FROM alpine:latest
+FROM golang:1.5.2
 MAINTAINER "Aleksa Sarai <cyphar@cyphar.com>"
-
-RUN apk update && \
-	apk upgrade && \
-	apk add git go make && \
-	rm -rf /var/cache/apk/*
 
 WORKDIR /go/src/github.com/cyphar/mkonion
 ENV GOPATH /go

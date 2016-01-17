@@ -30,9 +30,9 @@ OUT=bin
 docker: $(SRC)
 	@mkdir -p $(OUT)
 	$(DOCKER) build -t mkonion/build:dev .
-	$(DOCKER) run -e GOOS=$(shell $(GO) env GOOS) -e GOARCH=$(shell $(GO) env GOARCH) \
+	$(DOCKER) run -e GOOS=$(GOOS) -e GOARCH=$(GOARCH) \
 		-v $(PWD)/$(OUT):/go/src/github.com/cyphar/mkonion/$(OUT) mkonion/build:dev make OUT=$(OUT) mkonion
 
 mkonion: $(SRC)
 	@mkdir -p $(OUT)
-	$(GO) build -o $(OUT)/mkonion $(SRC)
+	CGO_ENABLED=0 $(GO) build -a -installsuffix cgo -ldflags '-s' -o $(OUT)/mkonion $(SRC)
