@@ -11,12 +11,40 @@ The point of this project is for this to be as turn-key as possible, in order to
 make it as easy as possible for people to try out Tor Onion Services with their
 existing Docker setup.
 
+### Usage ###
+
+The basic usage is the following:
+
+```
+% mkonion <container>
+```
+
+Simple as that. More options are in the works. You don't need to have any Tor
+setup, as `mkonion` includes inside it all of the required `Dockerfile` and
+configuration information to set up a new Tor container. If you want to take a
+closer look, check out `fakebuild.go`.
+
 ### Requirements ###
 
 `mkonion` depends on first-class networking in the Docker daemon, which means
 your Docker daemon must be at least version `1.9.0`. Any earlier versions could
 be made to work with some hacks, but without first-class networking it can't work
 reliably and easily.
+
+### Recommendations ###
+
+It's recommended to route all of your main container's traffic exclusively
+through Tor (using the [Tor networking driver][tor-network]), so if your service
+gets hacked the attacker cannot effectively retrieve your external IP address.
+
+If you're planning to use this on a service which requires server anonymity as a
+constraint, ensure that you remove all uniquely identifying information. Running
+your service in Tor masks your IP address in some senses, if you route all of the
+traffic through Tor. But you should also take steps to configure your server to
+not leak information, as well as reducing how easily [your writing can be fingerprinted][anonymouth].
+
+[tor-network]: https://github.com/jfrazelle/onion
+[anonymouth]: https://github.com/psal/anonymouth
 
 ### Overview ###
 
@@ -40,19 +68,6 @@ You could in principle emulate `mkonion` with something like:
 ```
 
 But who wants all of that typing?
-
-### Usage ###
-
-The basic usage is the following:
-
-```
-% mkonion <container>
-```
-
-Simple as that. More options are in the works. You don't need to have any Tor
-setup, as `mkonion` includes inside it all of the required `Dockerfile` and
-configuration information to set up a new Tor container. If you want to take a
-closer look, check out `fakebuild.go`.
 
 ### Why Onion Services? ###
 
