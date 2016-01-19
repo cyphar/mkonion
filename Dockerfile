@@ -19,11 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FROM golang:1.5.2
+FROM golang:1.5.3
 MAINTAINER "Aleksa Sarai <cyphar@cyphar.com>"
 
 WORKDIR /go/src/github.com/cyphar/mkonion
-ENV GOPATH /go
-
 COPY . /go/src/github.com/cyphar/mkonion
 RUN go get -v github.com/cyphar/mkonion
