@@ -25,9 +25,7 @@ import (
 	"bytes"
 	"text/template"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
-	"github.com/docker/go-connections/nat"
 )
 
 const (
@@ -40,40 +38,41 @@ SocksPort 0
 # Set up hidden service.
 HiddenServiceDir /var/run/tor/hidden_service
 {{range .Targets}}
-HiddenServicePort {{.Port}} {{.}}
+HiddenServicePort {{.ExternalPort}} {{.}}
 {{end}}
 `
 )
 
 type TargetIP struct {
-	Addr string
-	Port string
+	Addr         string
+	InternalPort string
+	ExternalPort string
 }
 
 func (t TargetIP) String() string {
-	return t.Addr + ":" + t.Port
+	return t.Addr + ":" + t.InternalPort
 }
 
 // XXX: This is probably very horrible.
 var confTemplate = template.Must(template.New("tor").Parse(torTemplate))
 
+func GenerateTargetMappings(ip string, mappings map[string]string) []TargetIP {
+	var targets []TargetIP
+	for external, internal := range mappings {
+		targets = append(targets, TargetIP{
+			Addr:         ip,
+			InternalPort: internal,
+			ExternalPort: external,
+		})
+	}
+	return targets
+}
+
 // GenerateConfig generates a configuraton file for a target container for a
 // given network. This is returned as a string, and warnings are logged if there
 // are any non-TCP ports exposed on the container.
-func GenerateConfig(cli *client.Client, ip string, ports []nat.Port) ([]byte, error) {
+func GenerateConfig(cli *client.Client, targets []TargetIP) ([]byte, error) {
 	config := new(bytes.Buffer)
-
-	var targets []TargetIP
-	for _, port := range ports {
-		if port.Proto() != "tcp" {
-			log.Warn("encountered non-TCP exposed port in container: %s", port)
-		}
-
-		targets = append(targets, TargetIP{
-			Addr: ip,
-			Port: port.Port(),
-		})
-	}
 
 	if err := confTemplate.Execute(config, struct {
 		Targets []TargetIP
