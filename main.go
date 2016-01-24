@@ -24,18 +24,42 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strconv"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
 )
 
+func IsInteger(s string) bool {
+	_, err := strconv.Atoi(s)
+	return err == nil
+}
+
 func mkonion() (err error) {
+	oMappings := new(flagList)
+	flag.Var(oMappings, "p", "specify a list of port mappings of the form '[onion:]container'")
+
 	flag.Parse()
 	oTargetContainer := flag.Arg(0)
 
 	if flag.NArg() != 1 || oTargetContainer == "" {
 		flag.Usage()
 		return fmt.Errorf("must specify a container to create an onion service for")
+	}
+
+	// Check the validity of arguments here.
+	for _, arg := range *oMappings {
+		ports := strings.SplitN(arg, ":", 2)
+		if len(ports) == 0 || len(ports) > 2 {
+			return fmt.Errorf("port mappings must be of the form '[onion:]container'")
+		}
+
+		for _, port := range ports {
+			if !IsInteger(port) {
+				return fmt.Errorf("port mappings must be integers")
+			}
+		}
 	}
 
 	cli, err := client.NewEnvClient()
@@ -82,11 +106,42 @@ func mkonion() (err error) {
 		return fmt.Errorf("finding target ports: %s", err)
 	}
 
+	// Add all exposed ports naively to mappings before parsing arguments.
+	portMappings := map[string]string{}
 	for _, port := range ports {
 		log.Infof("forwarding port: %s", port)
+		if port.Proto() != "tcp" {
+			log.Warn("encountered non-TCP exposed port in container: %s", port)
+		}
+		portMappings[port.Port()] = port.Port()
 	}
 
-	torrc, err := GenerateConfig(cli, ip, ports)
+	// Now deal with arguments.
+	for _, arg := range *oMappings {
+		var onion, container string
+
+		ports := strings.SplitN(arg, ":", 2)
+		onion = ports[0]
+
+		// The format is [onion:]container.
+		switch len(ports) {
+		case 2:
+			container = ports[1]
+		case 1:
+			container = ports[0]
+		default:
+			return fmt.Errorf("port mappings must be of the form '[onion:]container'")
+		}
+
+		// Can't redefine external mappings.
+		if _, ok := portMappings[onion]; ok {
+			return fmt.Errorf("cannot have multiple definitons of onion port mappings")
+		}
+
+		portMappings[onion] = container
+	}
+
+	torrc, err := GenerateConfig(cli, GenerateTargetMappings(ip, portMappings))
 	if err != nil {
 		return fmt.Errorf("generating torrc: %s", err)
 	}
