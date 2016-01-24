@@ -8,6 +8,7 @@
 
 ### Features ###
 
+* [x] Allow users to specify port mappings for hidden services.
 * [ ] Use the [tor network plugin][tor-network] to automatically route all of the
       target container's traffic through Tor. This might cause some issues, so it'd
       have to be optional. We'd need to disconnect the container from the default
