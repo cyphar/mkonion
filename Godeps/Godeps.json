@@ -1,0 +1,40 @@
+{
+	"ImportPath": "mkonion",
+	"GoVersion": "go1.5",
+	"Deps": [
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.8.7-53-g446d1c146faa",
+			"Rev": "446d1c146faa8ed3f4218f056fcd165f6bcfda81"
+		},
+		{
+			"ImportPath": "github.com/docker/engine-api/client",
+			"Comment": "v0.2.2-27-gbdbab71ec212",
+			"Rev": "bdbab71ec21209ef56dffdbe42c9d21843c30862"
+		},
+		{
+			"ImportPath": "github.com/docker/engine-api/types",
+			"Comment": "v0.2.2-27-gbdbab71ec212",
+			"Rev": "bdbab71ec21209ef56dffdbe42c9d21843c30862"
+		},
+		{
+			"ImportPath": "github.com/docker/go-connections/nat",
+			"Comment": "v0.1.2-2-g082e38283646",
+			"Rev": "082e382836465660fe3fd21de06624a205f986eb"
+		},
+		{
+			"ImportPath": "github.com/docker/go-connections/tlsconfig",
+			"Comment": "v0.1.2-2-g082e38283646",
+			"Rev": "082e382836465660fe3fd21de06624a205f986eb"
+		},
+		{
+			"ImportPath": "github.com/docker/go-units",
+			"Comment": "v0.1.0-21-g0bbddae09c5a",
+			"Rev": "0bbddae09c5a5419a8c6dcdd7ff90da3d450393b"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "50c6bc5e4292a1d4e65c6e9be5f53be28bcbe28e"
+		}
+	]
+}

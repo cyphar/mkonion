@@ -22,6 +22,8 @@
 FROM golang:1.5.3
 MAINTAINER "Aleksa Sarai <cyphar@cyphar.com>"
 
+RUN go get -v github.com/tools/godep
+
 WORKDIR /go/src/github.com/cyphar/mkonion
 COPY . /go/src/github.com/cyphar/mkonion
-RUN go get -v github.com/cyphar/mkonion
+RUN godep restore
