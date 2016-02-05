@@ -22,10 +22,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
+	"text/template"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
@@ -40,29 +42,66 @@ import (
 // have to touch the filesystem.
 
 const (
-	MkonionTag        = "mkonion/tor:latest"
-	MkonionDockerfile = `
+	MkonionTag                = "mkonion/tor:latest"
+	MkonionDockerfileTemplate = `
 	FROM alpine:latest
 	RUN echo '@testing http://nl.alpinelinux.org/alpine/edge/testing' >> /etc/apk/repositories && \
 		apk update && \
 		apk upgrade && \
 	    apk add --update \
 			tor@testing && \
+		{{ if .HasKey }}
+		mkdir -p /var/run/tor/hidden_service && \
+		{{ end }}
 		rm -rf /var/cache/apk/*
 	COPY torrc /etc/tor/torrc
+	{{ if .HasKey }}
+	COPY private_key /var/run/tor/hidden_service/private_key
+	{{ end }}
 	ENTRYPOINT ["/usr/bin/tor", "-f", "/etc/tor/torrc"]
-	CMD []
 	`
 )
 
-func makeBuildContext(torrc []byte) (io.Reader, error) {
-	return ArchiveContext([]*FakeFile{{
-		Path: "Dockerfile",
-		Data: []byte(MkonionDockerfile),
-	}, {
+var dockerfileTemplate = template.Must(template.New("dockerfile").Parse(MkonionDockerfileTemplate))
+
+func generateDockerfile(hasKey bool) (string, error) {
+	config := new(bytes.Buffer)
+
+	if err := dockerfileTemplate.Execute(config, struct {
+		HasKey bool
+	}{
+		HasKey: hasKey,
+	}); err != nil {
+		return "", err
+	}
+
+	return config.String(), nil
+}
+
+func makeBuildContext(torrc []byte, privatekey []byte) (io.Reader, error) {
+	hasKey := len(privatekey) > 0
+	dockerfile, err := generateDockerfile(hasKey)
+	if err != nil {
+		return nil, err
+	}
+
+	files := []*FakeFile{{
 		Path: "torrc",
 		Data: torrc,
-	}})
+	}, {
+		Path: "Dockerfile",
+		Data: []byte(dockerfile),
+	}}
+
+	// XXX: This is probably slightly unsafe.
+	if hasKey {
+		files = append(files, &FakeFile{
+			Path: "private_key",
+			Data: privatekey,
+		})
+	}
+
+	return ArchiveContext(files)
 }
 
 func buildTorImage(cli *client.Client, ctx io.Reader) (string, error) {
@@ -162,15 +201,16 @@ func runTorContainer(cli *client.Client, ident, imageID, network string) (string
 }
 
 type FakeBuildOptions struct {
-	ident     string
-	networkID string
-	torrc     []byte
+	ident      string
+	networkID  string
+	torrc      []byte
+	privatekey []byte
 }
 
 // FakeBuildRun builds and starts a new mkonion tor server container entirely
 // in memory with no files created on the local machine.
 func FakeBuildRun(cli *client.Client, options *FakeBuildOptions) (string, error) {
-	ctx, err := makeBuildContext(options.torrc)
+	ctx, err := makeBuildContext(options.torrc, options.privatekey)
 	if err != nil {
 		return "", fmt.Errorf("making build context: %s", err)
 	}
