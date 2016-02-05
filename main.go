@@ -24,6 +24,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"strings"
 
@@ -37,8 +38,13 @@ func IsInteger(s string) bool {
 }
 
 func mkonion() (err error) {
-	oMappings := new(flagList)
+	var (
+		oMappings   *flagList = new(flagList)
+		oPrivateKey string
+	)
+
 	flag.Var(oMappings, "p", "specify a list of port mappings of the form '[onion:]container'")
+	flag.StringVar(&oPrivateKey, "k", "", "specify a private_key to use for the hidden service")
 
 	flag.Parse()
 	oTargetContainer := flag.Arg(0)
@@ -46,6 +52,16 @@ func mkonion() (err error) {
 	if flag.NArg() != 1 || oTargetContainer == "" {
 		flag.Usage()
 		return fmt.Errorf("must specify a container to create an onion service for")
+	}
+
+	// Load the private key.
+	var privatekey []byte
+	if oPrivateKey != "" {
+		pk, err := ioutil.ReadFile(oPrivateKey)
+		if err != nil {
+			return fmt.Errorf("reading private key: %s", err)
+		}
+		privatekey = pk
 	}
 
 	// Check the validity of arguments here.
@@ -148,9 +164,10 @@ func mkonion() (err error) {
 	log.Info("generated torrc config")
 
 	buildOptions := &FakeBuildOptions{
-		ident:     ident,
-		networkID: networkID,
-		torrc:     torrc,
+		ident:      ident,
+		networkID:  networkID,
+		torrc:      torrc,
+		privatekey: privatekey,
 	}
 
 	containerID, err := FakeBuildRun(cli, buildOptions)
