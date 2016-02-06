@@ -31,9 +31,14 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
+	"github.com/docker/engine-api/types"
 )
 
 const HostnamePath = "/var/lib/tor/hidden_service/hostname"
+
+func isRunning(state *types.ContainerState) bool {
+	return state.Running && !state.Dead
+}
 
 func GetOnionHostname(cli *client.Client, containerID string) (string, error) {
 	content, stat, err := cli.CopyFromContainer(containerID, HostnamePath)
@@ -41,8 +46,16 @@ func GetOnionHostname(cli *client.Client, containerID string) (string, error) {
 	//      an .onion address, and there's not really any better way of
 	//      doing it.
 	for err != nil && strings.Contains(err.Error(), "no such file or directory") {
+		// Make sure the container hasn't died.
+		if inspect, err := cli.ContainerInspect(containerID); err != nil {
+			return "", fmt.Errorf("error inspecting container: %s", err)
+		} else if !isRunning(inspect.State) {
+			return "", fmt.Errorf("container died before the hostname was computed")
+		}
+
 		log.Warnf("tor onion hostname not found in container, retrying after a short nap...")
 		time.Sleep(500 * time.Millisecond)
+
 		content, stat, err = cli.CopyFromContainer(containerID, HostnamePath)
 	}
 	if err != nil {
