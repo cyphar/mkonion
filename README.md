@@ -16,13 +16,12 @@ existing Docker setup.
 The basic usage is the following:
 
 ```
-% mkonion <container>
+% mkonion [-k private_key] [-p [onion:]container]... <container>
 ```
 
-Simple as that. More options are in the works. You don't need to have any Tor
-setup, as `mkonion` includes inside it all of the required `Dockerfile` and
-configuration information to set up a new Tor container. If you want to take a
-closer look, check out `fakebuild.go`.
+Simple as that. You don't need to have any Tor setup, as `mkonion` includes
+inside it all of the required `Dockerfile` and configuration information to set
+up a new Tor container. If you want to take a closer look, check out `fakebuild.go`.
 
 ### Requirements ###
 
