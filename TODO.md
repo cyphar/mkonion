@@ -18,3 +18,9 @@
 * [ ] Consider adding support for OnionCat for exposed UDP ports.
 
 [tor-network]: https://github.com/jfrazelle/onion
+
+### Bugs ###
+
+* [ ] If the Tor container dies before we get the hostname, the waiting loop
+      doesn't terminate. We need to check for container death each time we wait
+      when getting the hostname.
