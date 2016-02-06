@@ -36,7 +36,7 @@ const (
 SocksPort 0
 
 # Set up hidden service.
-HiddenServiceDir /var/run/tor/hidden_service
+HiddenServiceDir /var/lib/tor/hidden_service
 {{range .Targets}}
 HiddenServicePort {{.ExternalPort}} {{.}}
 {{end}}

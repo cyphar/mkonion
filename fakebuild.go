@@ -51,12 +51,13 @@ const (
 	    apk add --update \
 			tor@testing && \
 		{{ if .HasKey }}
-		mkdir -p /var/run/tor/hidden_service && \
+		mkdir -p /var/lib/tor/hidden_service && \
+		chmod 600 /var/lib/tor/hidden_service && \
 		{{ end }}
 		rm -rf /var/cache/apk/*
 	COPY torrc /etc/tor/torrc
 	{{ if .HasKey }}
-	COPY private_key /var/run/tor/hidden_service/private_key
+	COPY private_key /var/lib/tor/hidden_service/private_key
 	{{ end }}
 	ENTRYPOINT ["/usr/bin/tor", "-f", "/etc/tor/torrc"]
 	`
@@ -86,18 +87,21 @@ func makeBuildContext(torrc []byte, privatekey []byte) (io.Reader, error) {
 	}
 
 	files := []*FakeFile{{
-		Path: "torrc",
-		Data: torrc,
+		path: "torrc",
+		mode: 0644,
+		data: torrc,
 	}, {
-		Path: "Dockerfile",
-		Data: []byte(dockerfile),
+		path: "Dockerfile",
+		mode: 0644,
+		data: []byte(dockerfile),
 	}}
 
 	// XXX: This is probably slightly unsafe.
 	if hasKey {
 		files = append(files, &FakeFile{
-			Path: "private_key",
-			Data: privatekey,
+			path: "private_key",
+			mode: 0600,
+			data: privatekey,
 		})
 	}
 

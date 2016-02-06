@@ -33,7 +33,7 @@ import (
 	"github.com/docker/engine-api/client"
 )
 
-const HostnamePath = "/var/run/tor/hidden_service/hostname"
+const HostnamePath = "/var/lib/tor/hidden_service/hostname"
 
 func GetOnionHostname(cli *client.Client, containerID string) (string, error) {
 	content, stat, err := cli.CopyFromContainer(containerID, HostnamePath)

@@ -30,20 +30,21 @@ import (
 )
 
 type FakeFile struct {
-	Path string
-	Data []byte
+	path string
+	data []byte
+	mode os.FileMode
 }
 
 func (ff *FakeFile) Name() string {
-	return ff.Path
+	return ff.path
 }
 
 func (ff *FakeFile) Size() int64 {
-	return int64(len(ff.Data))
+	return int64(len(ff.data))
 }
 
 func (ff *FakeFile) Mode() os.FileMode {
-	return 0644
+	return ff.mode
 }
 
 func (ff *FakeFile) ModTime() time.Time {
@@ -75,7 +76,7 @@ func ArchiveContext(files []*FakeFile) (io.Reader, error) {
 			return nil, err
 		}
 
-		if _, err := tw.Write(file.Data); err != nil {
+		if _, err := tw.Write(file.data); err != nil {
 			return nil, err
 		}
 	}
