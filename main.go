@@ -61,6 +61,12 @@ func mkonion() (err error) {
 		if err != nil {
 			return fmt.Errorf("reading private key: %s", err)
 		}
+
+		// -k is technically unsafe if you don't know what it does
+		log.WithFields(log.Fields{
+			"keypath": oPrivateKey,
+		}).Warn("using the -k option results in your private key being embedded in the resulting image: do not share the image or any images derived from it with anybody")
+
 		privatekey = pk
 	}
 
