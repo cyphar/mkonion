@@ -30,11 +30,14 @@ import (
 const (
 	MkonionTag                = "mkonion/tor:latest"
 	MkonionDockerfileTemplate = `
-	FROM alpine:latest
-	RUN echo '@testing http://nl.alpinelinux.org/alpine/edge/testing' >> /etc/apk/repositories && \
+	FROM alpine:3.4
+	RUN { \
+			echo '@edge http://dl-cdn.alpinelinux.org/alpine/edge/main'; \
+			echo '@edge http://dl-cdn.alpinelinux.org/alpine/edge/community';
+		} >> /etc/apk/repositories && \
 		apk update && \
 		apk upgrade && \
-	    apk add --update \
+	    apk add \
 			tor@testing && \
 		{{ if .HasKey }}
 		mkdir -p /var/lib/tor/hidden_service && \
